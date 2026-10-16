@@ -1,0 +1,105 @@
+# ============================================
+# Virtual Environment
+# ============================================
+venv/
+.venv/
+env/
+ENV/
+
+# ============================================
+# Python Cache & Build
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ============================================
+# File Hasil Scraping
+# ============================================
+*.csv
+*.json
+*.xlsx
+*.xls
+output/
+hasil/
+data/
+scraping_results/
+
+# ============================================
+# Checkpoint threads-scraper
+# ============================================
+*.checkpoint
+checkpoint/
+.checkpoint/
+
+# ============================================
+# Environment & Secrets
+# ============================================
+.env
+*.env
+.streamlit/secrets.toml
+secrets.toml
+
+# ============================================
+# Database Lokal
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# Log Files
+# ============================================
+*.log
+logs/
+
+# ============================================
+# Jupyter Notebook (jika ada analisis)
+# ============================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ============================================
+# IDE & Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vim/
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# File Sementara
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.orig
+tmp/
+temp/
+test_kw.txt

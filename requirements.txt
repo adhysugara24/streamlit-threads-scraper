@@ -1,0 +1,5 @@
+streamlit
+pandas
+webdriver-manager
+selenium
+threads-scraper
