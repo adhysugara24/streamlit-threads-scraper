@@ -53,6 +53,21 @@ with st.sidebar:
         value=10,
         help="Abaikan komentar yang lebih pendek dari ini."
     )
+    st.divider()
+    st.subheader("📅 Filter Waktu")
+
+    use_date_filter = st.checkbox(
+        "Aktifkan filter rentang tanggal",
+        value=False,
+        help="Filter ini diterapkan SETELAH data terkumpul, bukan saat scraping."
+    )
+
+    if use_date_filter:
+        date_from = st.date_input("Dari Tanggal", value=None)
+        date_to = st.date_input("Sampai Tanggal", value=None)
+    else:
+        date_from = None
+        date_to = None
 
     run_button = st.button("🚀 Mulai Scraping", type="primary", use_container_width=True)
 
@@ -160,11 +175,34 @@ if run_button:
 
 # --- Tampilkan Hasil ---
 if st.session_state.df_result is not None:
-    df = st.session_state.df_result
+    df = st.session_state.df_result.copy()
 
     st.header("📊 Hasil Scraping")
 
-    # Ringkasan
+    # --- Terapkan filter waktu jika diaktifkan ---
+    if use_date_filter and "timestamp" in df.columns:
+        # Konversi timestamp ke datetime
+        df["datetime"] = pd.to_datetime(df["timestamp"], unit="s", errors="coerce")
+        df["date"] = df["datetime"].dt.date
+
+        original_count = len(df)
+
+        if date_from is not None:
+            df = df[df["date"] >= date_from]
+        if date_to is not None:
+            df = df[df["date"] <= date_to]
+
+        filtered_count = len(df)
+        st.info(
+            f"🔍 Filter waktu aktif: **{filtered_count}** dari **{original_count}** baris "
+            f"({date_from or 'awal'} s/d {date_to or 'sekarang'})"
+        )
+
+        if filtered_count == 0:
+            st.warning("Tidak ada data dalam rentang tanggal yang dipilih.")
+            st.stop()
+
+    # --- Ringkasan ---
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Total Baris", len(df))
@@ -175,19 +213,30 @@ if st.session_state.df_result is not None:
         if "type" in df.columns:
             st.metric("Total Balasan", len(df[df["type"] == "reply"]))
 
-    # Tabel
+    # --- Tabel ---
     st.dataframe(df, use_container_width=True, height=400)
 
-    # Download
+    # Tombol download hasil filter
     csv_data = df.to_csv(index=False).encode("utf-8")
     st.download_button(
-        label="📥 Download CSV",
+        label="📥 Download CSV (hasil filter)",
         data=csv_data,
-        file_name=f"threads_karhutla_{int(time.time())}.csv",
+        file_name=f"threads_karhutla_filtered_{int(time.time())}.csv",
         mime="text/csv",
         use_container_width=True,
     )
 
-    # Statistik kolom (opsional)
+    # Tombol download data mentah
+    if use_date_filter:
+        raw_csv = st.session_state.df_result.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="📥 Download CSV (data mentah lengkap)",
+            data=raw_csv,
+            file_name=f"threads_karhutla_raw_{int(time.time())}.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
+    # --- Statistik ---
     with st.expander("📈 Lihat Statistik Kolom"):
         st.write(df.describe(include="all"))
