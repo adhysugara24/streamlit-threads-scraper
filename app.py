@@ -108,18 +108,25 @@ if run_button:
 
             venv_scripts = os.path.dirname(sys.executable)
 
-            # Coba beberapa kemungkinan nama perintah
-            possible_names = ["threads-scraper", "threads_comment_scraper", "threadscraper"]
-            scraper_exe = None
+            # Tentukan kandidat path secara spesifik
+            if sys.platform == "win32":
+                # Untuk di laptop Anda (Windows)
+                scraper_exe = os.path.join(os.path.dirname(sys.executable), "threads-scraper.exe")
+            else:
+                # Untuk di Streamlit Cloud (Linux)
+                # Berdasarkan log, lokasinya ada di /home/adminuser/venv/bin/
+                scraper_exe = "/home/adminuser/venv/bin/threads-scraper"
 
-            for name in possible_names:
-                scraper_exe = shutil.which(name)
-                if scraper_exe:
-                    break
+            # Jika file tidak ada di path hardcode, coba cari dengan shutil.which sebagai cadangan
+            if not os.path.exists(scraper_exe):
+                import shutil
+                scraper_exe = shutil.which("threads-scraper")
 
-            if scraper_exe is None:
-                st.error("Scraper tidak ditemukan. Cek log Streamlit Cloud untuk error instalasi.")
+            if not scraper_exe or not os.path.exists(scraper_exe):
+                st.error(f"Scraper tidak ditemukan. Path yang dicek: {scraper_exe}")
                 st.stop()
+
+            st.success(f"Scraper ditemukan di: {scraper_exe}")
 
             cmd = [
                 scraper_exe,
