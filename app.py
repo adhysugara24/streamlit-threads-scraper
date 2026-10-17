@@ -149,20 +149,27 @@ if run_button:
                 # Mulai driver
                 scraper.get_driver()
 
-                # ============================================================
-                # ▼▼▼ TAMBAHKAN KODE DEBUGGING SCREENSHOT DI SINI ▼▼▼
-                # ============================================================
-                st.info("Mengecek akses ke Threads...")
-                scraper.driver.get("https://www.threads.net/")
+                st.info("Mengecek akses ke halaman Threads...")
+                scraper.driver.get("https://www.threads.net/search?q=karhutla")
+
                 import time
-                time.sleep(3)
+                time.sleep(5) # Tunggu 5 detik
+
+                # Simpan screenshot
                 scraper.driver.save_screenshot("debug_threads.png")
 
+                # Tampilkan di Streamlit
                 if os.path.exists("debug_threads.png"):
-                    st.image("debug_threads.png", caption="Tampilan Threads dari Server Cloud")
-                    # ============================================================
-                    # ▲▲▲ BATAS KODE DEBUGGING ▲▲▲
-                    # ============================================================
+                    st.image("debug_threads.png", caption="Tampilan Threads dari Server AWS")
+
+                # Cek apakah diblokir
+                page_source = scraper.driver.page_source.lower()
+                if "log in" in page_source or "masuk" in page_source:
+                    st.error("🚨 TERDETEKSI HALAMAN LOGIN. Threads memblokir akses dari IP Server Cloud.")
+                elif "captcha" in page_source:
+                    st.error("🚨 TERDETEKSI CAPTCHA. Threads mendeteksi bot.")
+                else:
+                    st.success("Halaman berhasil dimuat tanpa blokir.")
 
                 # 4. Proses Scraping
                 st.info("Sedang melakukan scraping... (Mohon tunggu, jangan tutup halaman ini)")
