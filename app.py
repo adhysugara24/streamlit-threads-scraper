@@ -100,70 +100,45 @@ if run_button:
             st.write(f"Kata kunci: {', '.join(keywords)}")
             st.write("Menjalankan threads-scraper... (proses ini mungkin memakan waktu)")
 
-            # Susun perintah
-            if sys.platform == "win32":
-                exe_name = "threads-scraper.exe"
-            else:
-                exe_name = "threads-scraper"
-
-            venv_scripts = os.path.dirname(sys.executable)
-
-            st.info("Menjalankan scraper via Python -c...")
-
-            # Kode Python yang akan dieksekusi
-            python_code = f"""
-            import sys
-            try:
-                from threads_scraper.cli import main
-                sys.argv = ['threads-scraper', '--keywords-file', r'{keywords_file}', '--output', r'{output_path}', '--limit', '{limit}', '--delay-min', '{delay_min}', '--delay-max', '{delay_max}', '--min-length', '{min_length}']
-                main()
-            except ImportError:
-                try:
-                    from threads_scraper import main
-                    sys.argv = ['threads-scraper', '--keywords-file', r'{keywords_file}', '--output', r'{output_path}', '--limit', '{limit}', '--delay-min', '{delay_min}', '--delay-max', '{delay_max}', '--min-length', '{min_length}']
-                    main()
-                except Exception as e:
-                    print(f"Gagal mengimpor atau menjalankan scraper: {{e}}")
-                    sys.exit(1)
-            """
-
-            cmd = [sys.executable, "-c", python_code]
+ # ============================================================
+            # ▼▼▼ KODE FINAL: GUNAKAN KELAS ThreadsScraper ▼▼▼
+            # ============================================================
+            st.info("Menjalankan scraper via kelas ThreadsScraper...")
 
             try:
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=3600,
+                from threads_scraper.scraper import ThreadsScraper
+
+                # Inisialisasi scraper
+                # Di Streamlit Cloud, chromedriver biasanya ada di /usr/bin/chromedriver
+                scraper = ThreadsScraper(
+                    username=None,  # Tidak perlu login untuk data publik
+                    password=None,
+                    driver_path="/usr/bin/chromedriver"
                 )
 
-                if result.returncode == 0:
-                    st.write("✅ Scraping selesai!")
-                    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                        df = pd.read_csv(output_path)
-                        st.session_state.df_result = df
-                        st.write(f"Berhasil mengumpulkan **{len(df)}** baris data.")
-                    else:
-                        st.warning("File output kosong. Tidak ada data yang ditemukan.")
-                else:
-                    st.error("Scraping gagal.")
-                    st.code(result.stderr)
-                    st.code(result.stdout)
+                scraper.get_driver()
 
-            except subprocess.TimeoutExpired:
-                st.error("Scraping timeout (melebihi 1 jam). Coba kurangi limit atau kata kunci.")
+                # Jalankan scraping
+                # scrape() menerima list kata kunci dan jumlah scroll
+                keywords_list = [k.strip() for k in keywords_input.split("\n") if k.strip()]
+                # Estimasi scroll_times: 1 scroll ≈ 10-20 komentar, jadi limit/15
+                scroll_times = max(5, int(limit / 15))
+
+                data = scraper.scrape(keywords_list, scroll_times)
+                scraper.save_to_csv(data, output_path, csv_index=False)
+                scraper.close()
+
+                # Baca hasil CSV
+                import pandas as pd
+                df = pd.read_csv(output_path)
+                st.session_state.df_result = df
+                st.success(f"Scraping selesai! Berhasil mengumpulkan {len(df)} baris data.")
+
             except Exception as e:
-                st.error(f"Terjadi error: {e}")
-            finally:
-                # Cleanup file sementara
-                for p in [keywords_file, output_path]:
-                    try:
-                        if os.path.exists(p):
-                            os.unlink(p)
-                    except Exception:
-                        pass
-
-            status.update(label="Scraping selesai", state="complete")
+                st.error(f"Terjadi error saat scraping: {e}")
+                # Tampilkan traceback untuk debugging
+                import traceback
+                st.code(traceback.format_exc())
 
 # --- Tampilkan Hasil ---
 if st.session_state.df_result is not None:
