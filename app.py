@@ -108,31 +108,32 @@ if run_button:
 
             venv_scripts = os.path.dirname(sys.executable)
 
-            st.info("Menyiapkan modul scraper...")
+            st.info("Menjalankan scraper via Python -c...")
 
-            # Kita panggil Python yang sedang berjalan (sys.executable)
-            # lalu jalankan modul 'threads_scraper' secara langsung.
-            # Ini akan berfungsi di Windows maupun Linux tanpa perlu mencari file .exe.
-            cmd = [
-                sys.executable, "-m", "threads-scraper",
-                "--keywords-file", keywords_file,
-                "--output", output_path,
-                "--limit", str(limit),
-                "--delay-min", str(delay_min),
-                "--delay-max", str(delay_max),
-                "--min-length", str(min_length),
-            ]
+            # Kode Python yang akan dieksekusi
+            python_code = f"""
+            try:
+                from threads_scraper.cli import main
+                sys.argv = ['threads-scraper', '--keywords-file', r'{keywords_file}', '--output', r'{output_path}', '--limit', '{limit}', '--delay-min', '{delay_min}', '--delay-max', '{delay_max}', '--min-length', '{min_length}']
+                main()
+            except ImportError:
+                try:
+                    from threads_scraper import main
+                    sys.argv = ['threads-scraper', '--keywords-file', r'{keywords_file}', '--output', r'{output_path}', '--limit', '{limit}', '--delay-min', '{delay_min}', '--delay-max', '{delay_max}', '--min-length', '{min_length}']
+                    main()
+                except Exception as e:
+                    print(f"Gagal mengimpor atau menjalankan scraper: {{e}}")
+                    sys.exit(1)
+            """
 
-            # Tampilkan perintah yang akan dijalankan untuk verifikasi
-            st.code(" ".join(cmd))
+            cmd = [sys.executable, "-c", python_code]
 
             try:
-                # Jalankan dengan subprocess
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=3600,  # max 1 jam
+                    timeout=3600,
                 )
 
                 if result.returncode == 0:
