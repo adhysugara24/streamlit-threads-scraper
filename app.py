@@ -107,13 +107,19 @@ if run_button:
                 exe_name = "threads-scraper"
 
             venv_scripts = os.path.dirname(sys.executable)
-            scraper_exe = shutil.which("threads-scraper")
+
+            # Coba beberapa kemungkinan nama perintah
+            possible_names = ["threads-scraper", "threads_comment_scraper", "threadscraper"]
+            scraper_exe = None
+
+            for name in possible_names:
+                scraper_exe = shutil.which(name)
+                if scraper_exe:
+                    break
 
             if scraper_exe is None:
-                st.error("Scraper tidak ditemukan di sistem. Pastikan 'threads-scraper' ada di requirements.txt dan berhasil diinstal.")
+                st.error("Scraper tidak ditemukan. Cek log Streamlit Cloud untuk error instalasi.")
                 st.stop()
-
-            st.success(f"Scraper ditemukan di: {scraper_exe}")
 
             cmd = [
                 scraper_exe,
