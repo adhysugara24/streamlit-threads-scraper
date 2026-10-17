@@ -128,8 +128,9 @@ if run_button:
 
             st.success(f"Scraper ditemukan di: {scraper_exe}")
 
+            st.info("Menyiapkan modul scraper...")
             cmd = [
-                scraper_exe,
+                sys.executable, "-m", "threads_scraper",
                 "--keywords-file", keywords_file,
                 "--output", output_path,
                 "--limit", str(limit),
@@ -137,14 +138,6 @@ if run_button:
                 "--delay-max", str(delay_max),
                 "--min-length", str(min_length),
             ]
-
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=3600,
-                shell=True  # Biarkan sistem mencari perintah itu sendiri
-            )
 
             try:
                 # Jalankan dengan subprocess
