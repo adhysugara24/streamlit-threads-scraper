@@ -108,27 +108,11 @@ if run_button:
 
             venv_scripts = os.path.dirname(sys.executable)
 
-            # Tentukan kandidat path secara spesifik
-            if sys.platform == "win32":
-                # Untuk di laptop Anda (Windows)
-                scraper_exe = os.path.join(os.path.dirname(sys.executable), "threads-scraper.exe")
-            else:
-                # Untuk di Streamlit Cloud (Linux)
-                # Berdasarkan log, lokasinya ada di /home/adminuser/venv/bin/
-                scraper_exe = "/home/adminuser/venv/bin/threads-scraper"
-
-            # Jika file tidak ada di path hardcode, coba cari dengan shutil.which sebagai cadangan
-            if not os.path.exists(scraper_exe):
-                import shutil
-                scraper_exe = shutil.which("threads-scraper")
-
-            if not scraper_exe or not os.path.exists(scraper_exe):
-                st.error(f"Scraper tidak ditemukan. Path yang dicek: {scraper_exe}")
-                st.stop()
-
-            st.success(f"Scraper ditemukan di: {scraper_exe}")
-
             st.info("Menyiapkan modul scraper...")
+
+            # Kita panggil Python yang sedang berjalan (sys.executable)
+            # lalu jalankan modul 'threads_scraper' secara langsung.
+            # Ini akan berfungsi di Windows maupun Linux tanpa perlu mencari file .exe.
             cmd = [
                 sys.executable, "-m", "threads_scraper",
                 "--keywords-file", keywords_file,
@@ -138,6 +122,9 @@ if run_button:
                 "--delay-max", str(delay_max),
                 "--min-length", str(min_length),
             ]
+
+            # Tampilkan perintah yang akan dijalankan untuk verifikasi
+            st.code(" ".join(cmd))
 
             try:
                 # Jalankan dengan subprocess
