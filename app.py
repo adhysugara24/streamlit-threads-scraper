@@ -114,7 +114,7 @@ if run_button:
             # lalu jalankan modul 'threads_scraper' secara langsung.
             # Ini akan berfungsi di Windows maupun Linux tanpa perlu mencari file .exe.
             cmd = [
-                sys.executable, "-m", "threads_scraper",
+                sys.executable, "-m", "threads-scraper",
                 "--keywords-file", keywords_file,
                 "--output", output_path,
                 "--limit", str(limit),
