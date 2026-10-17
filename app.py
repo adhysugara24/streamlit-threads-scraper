@@ -107,19 +107,16 @@ if run_button:
                 exe_name = "threads-scraper"
 
             venv_scripts = os.path.dirname(sys.executable)
-            scraper_exe = os.path.join(venv_scripts, exe_name)
-
-            if not os.path.exists(scraper_exe):
-                scraper_exe = shutil.which("threads-scraper")
+            scraper_exe = shutil.which("threads-scraper")
 
             if scraper_exe is None:
-                st.error("Tidak dapat menemukan threads-scraper. Pastikan paket sudah diinstal.")
+                st.error("Scraper tidak ditemukan di sistem. Pastikan 'threads-scraper' ada di requirements.txt dan berhasil diinstal.")
                 st.stop()
 
             st.success(f"Scraper ditemukan di: {scraper_exe}")
 
             cmd = [
-                sys.executable, "-m", "threads_scraper",
+                scraper_exe,
                 "--keywords-file", keywords_file,
                 "--output", output_path,
                 "--limit", str(limit),
