@@ -119,7 +119,7 @@ if run_button:
             st.success(f"Scraper ditemukan di: {scraper_exe}")
 
             cmd = [
-                scraper_exe,  # Gunakan jalur absolut
+                sys.executable, "-m", "threads_scraper",
                 "--keywords-file", keywords_file,
                 "--output", output_path,
                 "--limit", str(limit),
