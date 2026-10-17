@@ -100,45 +100,84 @@ if run_button:
             st.write(f"Kata kunci: {', '.join(keywords)}")
             st.write("Menjalankan threads-scraper... (proses ini mungkin memakan waktu)")
 
- # ============================================================
-            # ▼▼▼ KODE FINAL: GUNAKAN KELAS ThreadsScraper ▼▼▼
             # ============================================================
-            st.info("Menjalankan scraper via kelas ThreadsScraper...")
+            # ▼▼▼ KODE FINAL: MONKEY-PATCH CHROME OPTIONS ▼▼▼
+            # ============================================================
+            st.info("Menginisialisasi ThreadsScraper dengan opsi Cloud...")
 
             try:
+                import sys
+                import os
+                import pandas as pd
+                from selenium import webdriver
+                from selenium.webdriver.chrome.service import Service
+                from selenium.webdriver.chrome.options import Options
+
+                # --- MULAI TAMBALAN (MONKEY-PATCH) ---
+                # Kita paksa library threads_scraper untuk menggunakan opsi Chrome yang aman untuk cloud
+                import threads_scraper.scraper as ts
+
+                def get_cloud_driver(self):
+                    chrome_options = Options()
+                    # Opsi wajib untuk lingkungan cloud/container
+                    chrome_options.add_argument("--headless=new")
+                    chrome_options.add_argument("--no-sandbox")
+                    chrome_options.add_argument("--disable-dev-shm-usage")
+                    chrome_options.add_argument("--disable-gpu")
+                    chrome_options.add_argument("--window-size=1920,1080")
+
+                    # Tentukan path chromedriver yang benar di Streamlit Cloud
+                    # Berdasarkan log, chromedriver ada di /usr/bin/chromedriver
+                    service = Service("/usr/bin/chromedriver")
+
+                    self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                    return self.driver
+
+                # Timpa method asli di dalam library
+                ts.ThreadsScraper.get_driver = get_cloud_driver
+                # --- AKHIR TAMBALAN ---
+
+                # Sekarang panggil library seperti biasa
                 from threads_scraper.scraper import ThreadsScraper
 
-                # Inisialisasi scraper
-                # Di Streamlit Cloud, chromedriver biasanya ada di /usr/bin/chromedriver
                 scraper = ThreadsScraper(
-                    username=None,  # Tidak perlu login untuk data publik
+                    username=None,
                     password=None,
-                    driver_path="/usr/bin/chromedriver"
+                    driver_path="/usr/bin/chromedriver" # Tetap berikan path agar tidak error di library
                 )
 
+                # Method ini sekarang akan memanggil versi yang sudah kita tambal
                 scraper.get_driver()
 
-                # Jalankan scraping
-                # scrape() menerima list kata kunci dan jumlah scroll
+                st.info("Sedang melakukan scraping... (Mohon tunggu, jangan tutup halaman ini)")
+
                 keywords_list = [k.strip() for k in keywords_input.split("\n") if k.strip()]
-                # Estimasi scroll_times: 1 scroll ≈ 10-20 komentar, jadi limit/15
-                scroll_times = max(5, int(limit / 15))
+                scroll_times = max(5, int(limit / 10))
 
                 data = scraper.scrape(keywords_list, scroll_times)
+
                 scraper.save_to_csv(data, output_path, csv_index=False)
                 scraper.close()
 
-                # Baca hasil CSV
-                import pandas as pd
-                df = pd.read_csv(output_path)
-                st.session_state.df_result = df
-                st.success(f"Scraping selesai! Berhasil mengumpulkan {len(df)} baris data.")
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    df = pd.read_csv(output_path)
+                    st.session_state.df_result = df
+                    st.success(f"✅ Scraping selesai! Berhasil mengumpulkan **{len(df)}** baris data.")
+                else:
+                    st.warning("Scraping selesai, tetapi tidak ada data yang ditemukan.")
 
             except Exception as e:
                 st.error(f"Terjadi error saat scraping: {e}")
-                # Tampilkan traceback untuk debugging
                 import traceback
                 st.code(traceback.format_exc())
+            finally:
+                try:
+                    if os.path.exists(keywords_file):
+                        os.unlink(keywords_file)
+                except Exception:
+                    pass
+
+            status.update(label="Proses Selesai", state="complete")
 
 # --- Tampilkan Hasil ---
 if st.session_state.df_result is not None:
