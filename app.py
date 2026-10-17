@@ -146,9 +146,25 @@ if run_button:
                     driver_path="/usr/bin/chromedriver" # Tetap berikan path agar tidak error di library
                 )
 
-                # Method ini sekarang akan memanggil versi yang sudah kita tambal
+                # Mulai driver
                 scraper.get_driver()
 
+                # ============================================================
+                # ▼▼▼ TAMBAHKAN KODE DEBUGGING SCREENSHOT DI SINI ▼▼▼
+                # ============================================================
+                st.info("Mengecek akses ke Threads...")
+                scraper.driver.get("https://www.threads.net/")
+                import time
+                time.sleep(3)
+                scraper.driver.save_screenshot("debug_threads.png")
+
+                if os.path.exists("debug_threads.png"):
+                    st.image("debug_threads.png", caption="Tampilan Threads dari Server Cloud")
+                    # ============================================================
+                    # ▲▲▲ BATAS KODE DEBUGGING ▲▲▲
+                    # ============================================================
+
+                # 4. Proses Scraping
                 st.info("Sedang melakukan scraping... (Mohon tunggu, jangan tutup halaman ini)")
 
                 keywords_list = [k.strip() for k in keywords_input.split("\n") if k.strip()]
@@ -156,15 +172,27 @@ if run_button:
 
                 data = scraper.scrape(keywords_list, scroll_times)
 
+                # 5. Simpan ke CSV
                 scraper.save_to_csv(data, output_path, csv_index=False)
                 scraper.close()
 
+                # ============================================================
+                # ▼▼▼ GANTI BAGIAN PEMBACAAN CSV DENGAN INI ▼▼▼
+                # ============================================================
+                # 6. Baca hasil dan tampilkan (dengan penanganan file kosong)
                 if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                    df = pd.read_csv(output_path)
-                    st.session_state.df_result = df
-                    st.success(f"✅ Scraping selesai! Berhasil mengumpulkan **{len(df)}** baris data.")
+                    try:
+                        df = pd.read_csv(output_path)
+                        if not df.empty:
+                            st.session_state.df_result = df
+                            st.success(f"✅ Scraping selesai! Berhasil mengumpulkan **{len(df)}** baris data.")
+                        else:
+                            st.warning("Scraping selesai, tetapi DataFrame kosong (tidak ada baris data).")
+                    except pd.errors.EmptyDataError:
+                        st.warning("⚠️ Scraper berjalan, tetapi file CSV kosong (tidak ada data yang berhasil diekstrak).")
                 else:
-                    st.warning("Scraping selesai, tetapi tidak ada data yang ditemukan.")
+                    st.warning("⚠️ Scraper berjalan, tetapi tidak menghasilkan file atau file berukuran 0 bytes.")
+                    st.info("Kemungkinan Threads tidak memuat hasil untuk kata kunci ini, atau akses dari server cloud diblokir (GeoIP).")
 
             except Exception as e:
                 st.error(f"Terjadi error saat scraping: {e}")
