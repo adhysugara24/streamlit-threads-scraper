@@ -112,6 +112,7 @@ if run_button:
 
             # Kode Python yang akan dieksekusi
             python_code = f"""
+            import sys
             try:
                 from threads_scraper.cli import main
                 sys.argv = ['threads-scraper', '--keywords-file', r'{keywords_file}', '--output', r'{output_path}', '--limit', '{limit}', '--delay-min', '{delay_min}', '--delay-max', '{delay_max}', '--min-length', '{min_length}']
